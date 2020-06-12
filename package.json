@@ -1,0 +1,27 @@
+{
+  "name": "record-screen",
+  "version": "1.0.0",
+  "description": "使用electron编写录屏软件",
+  "main": "main/index.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanzhizhong/record-screen.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hanzhizhong/record-screen/issues"
+  },
+  "homepage": "https://github.com/hanzhizhong/record-screen#readme",
+  "dependencies": {
+    "electron-is-dev": "^1.2.0"
+  },
+  "devDependencies": {
+    "concurrently": "^5.2.0",
+    "wait-on": "^5.0.1"
+  }
+}

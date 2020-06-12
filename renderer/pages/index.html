@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏幕录制</title>
+</head>
+<body>
+    <div id="app">
+        <button :disabled="isRecord" @click="startRecordScreen">开始录制</button>
+        <button :disabled="!isRecord" @click="stopRecordScreen">停止录制</button>
+    </div>
+</body>
+<script src="../js/vue.js"></script>
+<script>
+    const {desktopCapturer,ipcRenderer}=require('electron')
+    const DrawCanvas=require('../js/canvas')
+    const record=new Vue({
+        el:'#app',
+        data(){
+            return {
+                isRecord:false,
+                constrant:{video:false,audio:false},
+                audiostream:null,
+                screenwidth:1280,
+                screenheight:720,
+                drawCanvas:null 
+            }
+        },
+        methods:{
+            async getLocalUserMediaInfo(){
+                try{
+                    let devices=await navigator.mediaDevices.enumerateDevices();
+                    for(let device of devices){
+                        console.log('device',device)
+                        if(device.kind.includes('video')){
+                            this.constrant.video=true;
+                        }else if(device.kind.includes('audio')){
+                            this.constrant.audio=true 
+                        }
+                    }
+                }catch(err){
+                    console.log('获取本地媒体设备信息出错了',err);
+                }
+            },
+            //开始录制
+            async startRecordScreen(){
+                this.isRecord=true;
+                this.drawCanvas=new DrawCanvas(this.screenwidth,this.screenheight)
+                //获取本地媒体设备流
+                if(this.constrant.video){
+                    let camerastream=await this.getMediaStream({video:true,audio:false})
+                    //创建video 对象以便canvas 调用drawIamge
+                    this.drawCanvas.setCameraVideoEle(this.createVideoEle(camerastream))
+                }
+                if(this.constrant.audio){
+                    this.audiostream=await this.getMediaStream({video:false,audio:true})
+                }
+                //获取桌面流的数据
+                let deskstream=await this.getDesktopStream()
+
+                //桌面流创建video对象
+                if(deskstream){
+                    this.drawCanvas.setDesktopVideoEle(this.createVideoEle(deskstream))
+                }
+                this.drawCanvas.drawInit()
+                let canvas=this.drawCanvas.canvasEle;
+                let canvasStream=canvas.captureStream()
+                this.$refs['saw'].srcObject=canvasStream
+                //开始录制的流程
+                this.startRecord(canvasStream)
+            },
+            //停止录制
+            stopRecordScreen(){
+                this.isRecord=false;
+                this.mediarecorder.stop();
+                this.mediarecorder.onstop=()=>{
+                    this.drawCanvas=null;
+                    this.mediarecorder=null;
+                    this.audiostream=null;
+                    this.drawCanvas.stopDraw()
+                }
+                this.mediarecorder.ondataavailable=(e)=>{
+                    console.log('media data',e.data)
+                }
+            },
+            startRecord(cstream){
+                let mediastream=new MediaStream()
+                if(this.audiostream){
+                    this.audiostream.getTracks().forEach(item=>{
+                        mediastream.addTrack(item)
+                    })
+                }
+                cstream.getTracks().forEach(item=>{
+                    mediastream.addTrack(item)
+                })
+                this.mediarecorder=new MediaRecorder(mediastream)
+                this.mediarecorder.start()
+            },
+            //创建video对象
+            createVideoEle(stream){
+                let video=document.createElement('video')
+                video.autoplay=true;
+                video.srcObject=stream;
+                /* video.style.width='300px';
+                video.style.height='300px'
+                document.body.appendChild(video) */
+                return video;
+            },
+            //桌面流
+            async getDesktopStream(){
+                try{
+                    let sources=await desktopCapturer.getSources({types:['window','screen']})
+                    for(let source of sources){
+                        if(source.name==='Entire Screen'){
+                            return await navigator.mediaDevices.getUserMedia({audio:false,video:{
+                                mandatory:{
+                                    chromeMediaSource:'desktop',
+                                    chromeMediaSourceId:source.id,
+                                    minWidth:this.screenwidth,
+                                    minHeight:this.screenheight,
+                                    maxWidth:this.screenwidth,
+                                    maxHeight:this.screenheight
+                                }
+                            }})
+                        }
+                    }
+                }catch(err){
+                    console.log('获取桌面流的数据错误',err)
+                    return null;
+                }
+            },
+            async getMediaStream(cons){
+                try{
+                    return await navigator.mediaDevices.getUserMedia(cons)
+                }catch(err){
+                    let str=''
+                    if(cons.audio){
+                        str='video'
+                    }else{
+                        str='audio'
+                    }
+                    console.log(`${str}设备流信息获取失败${err}`)
+                }
+            }
+
+        },
+        mounted(){
+            //判断用户的本地媒体设备
+            this.getLocalUserMediaInfo()
+        }
+    })
+</script>
+</html>
