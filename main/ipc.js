@@ -1,7 +1,7 @@
 const {ipcMain,dialog}=require('electron')
 const {resolve}=require('path')
 module.exports=()=>{
-    ipcMain.handle('record-screen',async (e)=>{
+    ipcMain.handle('save-recorder',async (e)=>{
         let result=await dialog.showSaveDialog({
             title:'视频另存为',
             defaultPath:'default.webm',
@@ -10,7 +10,6 @@ module.exports=()=>{
                 {name:"All Files",extensions:["*"]}
             ]
         })
-        console.log('result',result)
         return result
     })
 }

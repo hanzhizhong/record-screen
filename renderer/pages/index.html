@@ -15,6 +15,7 @@
 <script>
     const {desktopCapturer,ipcRenderer}=require('electron')
     const DrawCanvas=require('../js/canvas')
+    const fs=require('fs')
     const record=new Vue({
         el:'#app',
         data(){
@@ -32,7 +33,6 @@
                 try{
                     let devices=await navigator.mediaDevices.enumerateDevices();
                     for(let device of devices){
-                        console.log('device',device)
                         if(device.kind.includes('video')){
                             this.constrant.video=true;
                         }else if(device.kind.includes('audio')){
@@ -66,7 +66,6 @@
                 this.drawCanvas.drawInit()
                 let canvas=this.drawCanvas.canvasEle;
                 let canvasStream=canvas.captureStream()
-                this.$refs['saw'].srcObject=canvasStream
                 //开始录制的流程
                 this.startRecord(canvasStream)
             },
@@ -78,11 +77,29 @@
                     this.drawCanvas=null;
                     this.mediarecorder=null;
                     this.audiostream=null;
-                    this.drawCanvas.stopDraw()
                 }
+                this.drawCanvas.stopDraw()
                 this.mediarecorder.ondataavailable=(e)=>{
-                    console.log('media data',e.data)
+                    //保存为本地视频文件
+                    this.saveMediaData2Local(e.data)
                 }
+            },
+            //保存文件
+            async saveMediaData2Local(data){
+                let buffer=new Uint8Array(await data.arrayBuffer())
+                ipcRenderer.invoke('save-recorder').then(ret=>{
+                    if(ret.filePath){
+                        let writeStream=fs.createWriteStream(ret.filePath);
+                        writeStream.write(buffer)
+                        writeStream.end()
+                        writeStream.on('finish',()=>{
+                            console.log('视频保存成功')
+                        })
+                        writeStream.on('error',(err)=>{
+                            console.log('视频保存错误')
+                        })
+                    }
+                })
             },
             startRecord(cstream){
                 let mediastream=new MediaStream()
