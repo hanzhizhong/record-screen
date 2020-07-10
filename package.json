@@ -2,9 +2,12 @@
   "name": "record-screen",
   "version": "1.0.0",
   "description": "使用electron编写录屏软件",
-  "main": "main/index.js",
+  "main": "app/main/index.js",
   "scripts": {
-    "start": "electron ."
+    "dev": "cross-env NODE_ENV=dev electron .",
+    "start":"cross-env NODE_ENV=production electron .",
+    "pack:win": "cross-env NPM_CONFIG_ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ electron-builder build --win --ia32",
+    "postinstall": "electron-builder install-app-deps "
   },
   "repository": {
     "type": "git",
@@ -18,10 +21,46 @@
   },
   "homepage": "https://github.com/hanzhizhong/record-screen#readme",
   "dependencies": {
-    "electron-is-dev": "^1.2.0"
+    "electron-is-dev": "^1.2.0",
+    "electron-updater": "^4.3.1"
   },
   "devDependencies": {
-    "concurrently": "^5.2.0",
+    "cross-env": "^7.0.2",
+    "electron": "^8.3.4",
+    "electron-builder": "^22.7.0",
     "wait-on": "^5.0.1"
+  },
+  "build": {
+    "appId": "com.example.app",
+    "productName": "RecorderScreen",
+    "copyright": "copyright © 2020 hanzhong",
+    "asar": true,
+    "files": "app",
+    "directories": {
+      "buildResources": "resource",
+      "output": "release"
+    },
+    "extraFiles": [
+      "app/media"
+    ],
+    "publish":{
+      "provider":"generic",
+      "url":"http://127.0.0.1:8100/win32/"
+    },
+    "win": {
+      "icon": "resource/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "language": "2052",
+      "allowToChangeInstallationDirectory": true
+    },
+    "squirrelWindows": {
+      "iconUrl": "http://www.zhangzdong.com/icon.ico"
+    }
   }
 }

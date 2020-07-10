@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>屏幕录制</title>
+    
 </head>
 <body>
     <div id="app">
         <button :disabled="isRecord" @click="startRecordScreen">开始录制</button>
         <button :disabled="!isRecord" @click="stopRecordScreen">停止录制</button>
+
+        
     </div>
 </body>
 <script src="../js/vue.js"></script>
@@ -26,6 +29,7 @@
                 screenwidth:1280,
                 screenheight:720,
                 drawCanvas:null 
+                
             }
         },
         methods:{
@@ -111,7 +115,7 @@
                 cstream.getTracks().forEach(item=>{
                     mediastream.addTrack(item)
                 })
-                this.mediarecorder=new MediaRecorder(mediastream)
+                this.mediarecorder=new MediaRecorder(mediastream,{mimeType:'video/webm;codecs="h264"'})
                 this.mediarecorder.start()
             },
             //创建video对象
@@ -159,12 +163,22 @@
                     }
                     console.log(`${str}设备流信息获取失败${err}`)
                 }
+            },
+            monitUpdater(){
+                ipcRenderer.on('checking-update',(e,msg)=>{
+                    console.log('checking-update',msg)
+                })
+                ipcRenderer.on('update-not-available',(e,msg)=>{
+                    console.log('update-not-available',msg)
+                })
             }
 
         },
         mounted(){
             //判断用户的本地媒体设备
-            this.getLocalUserMediaInfo()
+            this.getLocalUserMediaInfo();
+            //监听更新
+            this.monitUpdater()
         }
     })
 </script>

@@ -5,10 +5,10 @@ let win;
 function create(area){
     win=new BrowserWindow({
         width:300,
-        height:200,
+        height:100,
         show:false,
         x:area.width-300+area.x,
-        y:area.height-200,
+        y:area.height-100,
         webPreferences:{
             nodeIntegration:true 
         }
@@ -20,14 +20,17 @@ function create(area){
         win.show()
     })
     win.loadFile(resolve(__dirname,'../renderer/pages/index.html'))
-    /* console.log('判断是否是开发环境',isDev)
-    if(isDev){
-        win.loadURL('http://localhost:8080')
-    }else{
-        win.loadFile(resolve(__dirname,'renderer/pages/index.html'))
-    } */
+}
+function send(channel,...args){
+    win.webContents.send(channel,...args)
+}
+function close(){
+    win.close()
+}
+module.exports={
+    create,
+    send,
+    close,
+    win
 }
 
-module.exports={
-    create
-}
